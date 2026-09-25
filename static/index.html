@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Chatbot</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --bubble-bot: #334155;
+      --bubble-user: #2563eb;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title .logo {
+      font-size: 1.4rem;
+    }
+
+    .header-title h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .header-title span {
+      font-size: 0.75rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: var(--border-color);
+      color: var(--text-main);
+    }
+
+    /* Chat Messages Container */
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.bot {
+      justify-content: flex-start;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message-row.user .bubble {
+      background-color: var(--bubble-user);
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .message-row.bot .bubble {
+      background-color: var(--bubble-bot);
+      color: var(--text-main);
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .bubble code {
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+      background-color: var(--bubble-bot);
+      border-radius: 12px;
+      border-bottom-left-radius: 2px;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background-color: var(--text-muted);
+      border-radius: 50%;
+      animation: blink 1.4s infinite ease-in-out both;
+    }
+
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Error Banner */
+    #error-banner {
+      display: none;
+      background-color: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      padding: 10px 16px;
+      margin: 0 24px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    /* Input Footer */
+    footer {
+      background-color: var(--card-bg);
+      border-top: 1px solid var(--border-color);
+      padding: 16px 24px;
+      flex-shrink: 0;
+    }
+
+    .input-form {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-form textarea {
+      flex: 1;
+      background-color: #0b1120;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      resize: none;
+      height: 48px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-form textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .input-form button {
+      background-color: var(--accent);
+      color: #0f172a;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 0 20px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .input-form button:hover {
+      opacity: 0.9;
+    }
+
+    .input-form button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--border-color);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <span class="logo">✨</span>
+      <h1>Gemini Chatbot</h1>
+      <span>AI Powered</span>
+    </div>
+    <button class="btn-reset" id="btn-reset" title="Start a fresh conversation">New Chat</button>
+  </header>
+
+  <div id="error-banner"></div>
+
+  <div id="chat-container">
+    <div class="message-row bot">
+      <div class="bubble">Hello! I'm Gemini. How can I help you today?</div>
+    </div>
+  </div>
+
+  <footer>
+    <form class="input-form" id="chat-form">
+      <textarea id="user-input" placeholder="Type your message... (Press Enter to send, Shift+Enter for newline)" rows="1"></textarea>
+      <button type="submit" id="send-btn">Send</button>
+    </form>
+  </footer>
+
+  <script>
+    const chatContainer = document.getElementById("chat-container");
+    const chatForm = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const btnReset = document.getElementById("btn-reset");
+    const errorBanner = document.getElementById("error-banner");
+
+    let sessionId = null;
+
+    function showError(msg) {
+      errorBanner.textContent = msg;
+      errorBanner.style.display = "block";
+    }
+
+    function clearError() {
+      errorBanner.textContent = "";
+      errorBanner.style.display = "none";
+    }
+
+    function scrollToBottom() {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendMessage(text, sender) {
+      const row = document.createElement("div");
+      row.className = `message-row ${sender}`;
+      
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+      
+      row.appendChild(bubble);
+      chatContainer.appendChild(row);
+      scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+      const row = document.createElement("div");
+      row.className = "message-row bot";
+      row.id = "typing-indicator-row";
+
+      const indicator = document.createElement("div");
+      indicator.className = "typing-indicator";
+      indicator.innerHTML = "<span></span><span></span><span></span>";
+
+      row.appendChild(indicator);
+      chatContainer.appendChild(row);
+      scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById("typing-indicator-row");
+      if (indicator) indicator.remove();
+    }
+
+    async function sendMessage(text) {
+      clearError();
+      appendMessage(text, "user");
+      showTypingIndicator();
+
+      sendBtn.disabled = true;
+      userInput.disabled = true;
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, sessionId: sessionId })
+        });
+
+        const data = await res.json();
+        removeTypingIndicator();
+
+        if (!res.ok || data.error) {
+          showError(data.error || "Failed to communicate with server.");
+        } else {
+          sessionId = data.sessionId;
+          appendMessage(data.reply, "bot");
+        }
+      } catch (err) {
+        removeTypingIndicator();
+        showError("Network error: Could not reach the chatbot server.");
+      } finally {
+        sendBtn.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      userInput.value = "";
+      sendMessage(text);
+    });
+
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.dispatchEvent(new Event("submit"));
+      }
+    });
+
+    btnReset.addEventListener("click", async () => {
+      if (sessionId) {
+        await fetch("/api/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: sessionId })
+        });
+      }
+      sessionId = null;
+      chatContainer.innerHTML = `
+        <div class="message-row bot">
+          <div class="bubble">Started a new chat. How can I help you today?</div>
+        </div>
+      `;
+      clearError();
+    });
+  </script>
+</body>
+</html>
